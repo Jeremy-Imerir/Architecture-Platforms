@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import socket, hashlib, base64, threading
+import socket, hashlib, base64, threading, sys
 
 class PyWSock:
     MAGIC = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
@@ -12,6 +12,7 @@ class PyWSock:
     LOCK = threading.Lock()
     
     clients = []
+    currentclients = 0
 
     def recv_data (self, client):
         # as a simple server, we expect to receive:
@@ -81,34 +82,41 @@ class PyWSock:
         print('Response: [%s]' % (resp_data,))
         return client.send(resp_data)
      
-    def handle_client (self, client, addr):
+    def handle_client (self, client, addr, clientnumber):
         self.handshake(client)
         try:
-            while 1:            
+            while 1:
                 data = self.recv_data(client)
-                print("received [%s] from [%s]" % (data,str(addr),))
+                print("Client [%d] sent [%s] with [%s]" % (clientnumber, data,str(addr),))
                 self.broadcast_resp(data)
         except Exception as e:
             print("Exception %s" % (str(e)))
         print('Client closed: ' + str(addr))
+        self.currentclients -= 1
         self.LOCK.acquire()
         self.clients.remove(client)
         self.LOCK.release()
         client.close()
         
-    def start_server (self, port):
+    def start_server (self, port, nbofclients):
         s = socket.socket()
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(('', port))
         s.listen(5)
-        while(1):
-            print ('Waiting for connection...')
-            conn, addr = s.accept()
-            print ('Connection from: ' + str(addr))
-            threading.Thread(target = self.handle_client, args = (conn, addr)).start()
-            self.LOCK.acquire()
-            self.clients.append(conn)
-            self.LOCK.release()
+        while(self.currentclients<nbofclients):
+        	try:
+				print ('Waiting for connection...')
+				conn, addr = s.accept()
+				self.currentclients +=1
+				print ('Connection from: ' + str(addr))
+				threading.Thread(target = self.handle_client, args = (conn, addr, self.currentclients)).start()
+				self.LOCK.acquire()
+				self.clients.append(conn)
+				self.LOCK.release()
+        		
+        	except KeyboardInterrupt:
+        		# quit
+        		sys.exit()
  
 ws = PyWSock()
-ws.start_server(4545)
+ws.start_server(4545, 3)
