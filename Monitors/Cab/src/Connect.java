@@ -11,9 +11,9 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 public class Connect extends Thread {
 
 //	private String dest = "ws://172.30.0.184:2009";
-	private String URL = "http://172.30.0.184:80/deviceConnect";
+//	private String URL = "http://172.30.0.184:80/deviceConnect";
 //	private String dest = "ws://172.30.0.170:8000";
-//	private String URL = "http://172.30.0.170:8080";
+	private String URL = "http://172.30.0.170:8080";
 	private WebSocketClient client = new WebSocketClient();
 	private	ClientSocket socket = new ClientSocket();
 	
@@ -56,7 +56,6 @@ public class Connect extends Thread {
 
 		int responseCode = con.getResponseCode();
 		System.out.println("\nSending 'GET' request to URL : " + url);
-		//System.out.println("Response Code : " + responseCode);
 
 		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 		
