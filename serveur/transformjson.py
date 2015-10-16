@@ -89,10 +89,18 @@ json_string = """
                 ],
                 "bridges": [
                     {
+                        "from": "a",
+                        "to": {
+                            "area": "Quartier Est",
+                            "vertex": "o"
+                        },
+                        "weight": 2
+                    },
+                    {
                         "from": "b",
                         "to": {
-                            "area": "Quartier Sud",
-                            "vertex": "h"
+                            "area": "Quartier Centre",
+                            "vertex": "l"
                         },
                         "weight": 2
                     }
@@ -161,9 +169,17 @@ json_string = """
                 ],
                 "bridges": [
                     {
+                        "from": "g",
+                        "to": {
+                            "area": "Quartier Ouest",
+                            "vertex": "b"
+                        },
+                        "weight": 2
+                    },
+                    {
                         "from": "h",
                         "to": {
-                            "area": "Quartier Nord",
+                            "area": "Quartier Est",
                             "vertex": "b"
                         },
                         "weight": 2
@@ -241,10 +257,18 @@ json_string = """
                 ],
                 "bridges": [
                     {
-                        "from": "h",
+                        "from": "l",
                         "to": {
-                            "area": "Quartier Nord",
-                            "vertex": "b"
+                            "area": "Quartier Centre",
+                            "vertex": "h"
+                        },
+                        "weight": 2
+                    },
+                    {
+                        "from": "o",
+                        "to": {
+                            "area": "Quartier Ouest",
+                            "vertex": "a"
                         },
                         "weight": 2
                     }
@@ -267,8 +291,6 @@ nmap = numpy.array([
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]])
 	
 def paintStreets(firstpoint, secondpoint) :
-		print firstpoint+ " "+secondpoint
-		print
 		firstpoint = firstpoint.split(";")
 		secondpoint = secondpoint.split(";")
 		
@@ -348,10 +370,13 @@ for i in range(len(areas)) :
 				firstpoint = ""
 				secondpoint = ""
 		
-	# for l in range(len(areamapbridges)) :
-		# areamapbridgesto = areamapbridges[l]["to"]
-		# bridgeList.append(str(i+1)+";"+str(areamapbridgesto["vertex"])+";"+str(areamapbridgesto["area"])+";"+str(areamapbridges[l]["from"]+";"+str(areamapbridges[l]["weight"])))
-		# nmap[y][x] = 0
+	for l in range(len(areamapbridges)) :
+		areamapbridgesfrom = areamapbridges[l]["from"]
+		for m in range(len(vertexList[0])) :
+			if vertexList[0][m] == areamapbridgesfrom:
+				bridge = vertexList[1][m]
+				bridge = bridge.split(";")
+				nmap[int(bridge[1])][int(bridge[0])] = 2
 		
 nmap = nmap[::-1]
 print nmap
