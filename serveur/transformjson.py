@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import json, re, numpy
+import json, re, numpy, shortestfield, math, yaml
 
 json_string = """
 {
@@ -278,47 +278,6 @@ json_string = """
     ]
 }"""
 
-nmap = numpy.array([
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]])
-	
-def paintStreets(firstpoint, secondpoint) :
-		firstpoint = firstpoint.split(";")
-		secondpoint = secondpoint.split(";")
-		
-		diffX = abs(int(firstpoint[0]) - int(secondpoint[0]))
-		diffY = abs(int(firstpoint[1]) - int(secondpoint[1]))
-		
-		# Difference on the x axis
-		if diffX != 0 and diffY == 0:
-			for n in range(diffX) :
-				if int(firstpoint[0]) > int(secondpoint[0]) :
-					# X and Y are reversed because it's reversed too in nmap
-					nmap[int(secondpoint[1])][int(secondpoint[0])+int(n)] = 0
-
-				elif int(secondpoint[0]) > int(firstpoint[0]) :
-					# X and Y are reversed because it's reversed too in nmap
-					nmap[int(firstpoint[1])][int(firstpoint[0])+int(n)] = 0
-
-		# Difference on the y axis
-		if diffY != 0 and diffX == 0:
-			for n in range(diffY):
-				if int(firstpoint[1]) > int(secondpoint[1]) :
-					# X and Y are reversed because it's reversed too in nmap
-					nmap[int(secondpoint[1])+int(n)][int(secondpoint[0])] = 0
-
-				elif int(secondpoint[1]) > int(firstpoint[1]) :
-					# X and Y are reversed because it's reversed too in nmap
-					nmap[int(firstpoint[1])+int(n)][int(firstpoint[0])] = 0
-
 parsed_json = json.loads(json_string, "utf-8")
 areas = parsed_json["areas"]
 
@@ -343,43 +302,49 @@ for i in range(len(areas)) :
 		y = int(round((areamapvertices[j]["y"])*9))
 		
 		# print "x :"+str(x)+" y :"+str(y)
-		nmap[y][x] = 0
-		
-		# vertexList.append(str(areamapvertices[j]["name"])+";"+str(i+1)+";"+str(areamapvertices[j]["x"])+";"+str(areamapvertices[j]["y"]))
-		
+		# nmap[y][x] = 0
+
 		# Append vertexes in a two-dimensional array
 		vertexList[0].append(str(areamapvertices[j]["name"]))
 		vertexList[1].append(str(x)+";"+str(y))
-
-	for k in range(len(areamapstreets)) :
-		areamapstreetspath = areamapstreets[k]["path"]
-		streetList.append(str(i+1)+";"+str(areamapstreetspath[0])+";"+str(areamapstreetspath[1])+";"+str(areamapstreets[k]["name"]+";"+str(areamapstreets[k]["oneway"])))
-		firstpoint = ""
-		secondpoint = ""
-
-		for m in range(len(vertexList[0])) :
-			# print vertexList[0][m] +" "+ str(areamapstreetspath[1])
-			if vertexList[0][m] == str(areamapstreetspath[0]):
-				firstpoint = vertexList[1][m]
-			elif vertexList[0][m] == str(areamapstreetspath[1]):
-				secondpoint = vertexList[1][m]
-				
-			# I have the 2 points of the street i can paint it
-			if firstpoint!="" and secondpoint != "" :
-				paintStreets(firstpoint, secondpoint)
-				firstpoint = ""
-				secondpoint = ""
-		
 	for l in range(len(areamapbridges)) :
 		areamapbridgesfrom = areamapbridges[l]["from"]
-		for m in range(len(vertexList[0])) :
-			if vertexList[0][m] == areamapbridgesfrom:
-				bridge = vertexList[1][m]
-				bridge = bridge.split(";")
-				nmap[int(bridge[1])][int(bridge[0])] = 2
-		
-nmap = nmap[::-1]
-print nmap
+		areamapbridgesto = areamapbridges[l]["to"]
+		streetList.append(str(areamapbridgesfrom[0])+";"+str(areamapbridgesto["vertex"]))
+	for k in range(len(areamapstreets)) :
+		areamapstreetspath = areamapstreets[k]["path"]
+		streetList.append(str(areamapstreetspath[0])+";"+str(areamapstreetspath[1]))
 
-print vertexList[0]
-print vertexList[1]
+
+# Graph = "{"
+Graph={}
+alreadyPut = []
+streetList = sorted(streetList, key=str.lower)
+
+print streetList
+print 
+
+for k in range(len(streetList)) :
+	streetPoints = streetList[k].split(";")
+	for m in range(len(vertexList[0])) :
+		for n in range(len(vertexList[0])) :
+			npoint = vertexList[1][n].split(";")
+			mpoint = vertexList[1][m].split(";")
+			xdistance = (int(npoint[0]) - int(mpoint[0])) ** 2
+			ydistance = (int(npoint[1]) - int(mpoint[1])) ** 2
+			distance = int(math.sqrt(xdistance + ydistance))
+			if vertexList[0][m] == streetPoints[1] and vertexList[0][n] == streetPoints[0]:
+				try:
+					Graph[vertexList[0][m]].update( {vertexList[0][n] : distance} )
+				except:
+					Graph[vertexList[0][m]] = {vertexList[0][n] : distance}
+			if vertexList[0][m] == streetPoints[0] and vertexList[0][n] == streetPoints[1]:
+				try:
+					Graph[vertexList[0][m]].update( {vertexList[0][n] : distance} )
+				except:
+					Graph[vertexList[0][m]] = {vertexList[0][n] : distance}
+
+print Graph
+
+l4,c4 = shortestfield.dij_rec(Graph, "a", "p")
+print 'Plus court chemin ex4 : ',c4, ' de longueur :',l4

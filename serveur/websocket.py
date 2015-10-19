@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 import signal, sys, json, re
 from SimpleWebSocketServer import WebSocket, SimpleWebSocketServer
@@ -8,7 +9,7 @@ import numpy
 from heapq import *
 
 listOfClients = []
-adresse = '172.30.0.170'
+adresse = '172.30.0.227'
 port = 8000
 thread = None
 
@@ -301,6 +302,7 @@ class WebsocketServer(WebSocket):
 		print self.data, 'sent'
 	
 	def handleConnected(self):
+		# Accept connection
 		if len(listOfClients)<4:
 			listOfClients.append(self)
 			self.sendMessage(unicode(json_string))
@@ -309,16 +311,19 @@ class WebsocketServer(WebSocket):
 	#		if thread is None:
 	#			thread = Thread(target=send_cab_pos)
 	#			thread.start()
+		#Reject connection
 		else:
 			self.rejected = 1
 			handleClose(self)
 	
 	def handleClose(self):
+		# Connection closed by client
 		if self.rejected == 0:
 			listOfClients.remove(self)
 			# self.rejected = 0
 			print self.address, 'closed'
 			
+		# Connection closed by server
 		else:
 			self.sendMessage(unicode("Server full, client rejected"))
 			print self.address, 'rejected. Full'
@@ -334,7 +339,7 @@ class WebsocketServer(WebSocket):
 				# self.sendMessage(unicode("En attente d'autres utilisateurs"))
 
 
-	
+#Create websocket
 server = SimpleWebSocketServer(adresse, port, WebsocketServer)
 print "Serveur en ecoute sur l'adresse : "+adresse+" et sur le port : "+str(port)
 server.serveforever()
