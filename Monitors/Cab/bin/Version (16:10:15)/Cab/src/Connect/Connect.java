@@ -1,41 +1,39 @@
+package Connect;
+
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.util.Observer;
-import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jetty.websocket.client.WebSocketClient;
+import org.json.simple.JSONObject;
 
 public class Connect extends Thread {
 
-//	private String dest = "ws://172.30.0.184:2009";
-//	private String URL = "http://172.30.0.184:80/deviceConnect";
-//	private String dest = "ws://172.30.0.170:8000";
-	private String url = "http://172.30.0.170:8080";
+	
+	private String url = "http://172.30.0.227:8080";
 	private WebSocketClient client = new WebSocketClient();
 	private	ClientSocket socket = new ClientSocket();
 	
 	public void run(){
 		try {
-			client.start();
-			
 			/* get the HTTP address */
 			String destinataire = getURL(url);
-			System.out.println(destinataire);
+
+			/* decode JSON send by HTTP */
+			ClientJSON httpJson = new ClientJSON();
+			String address = httpJson.HTTP_JSON(destinataire);
 			
-			URI echoURI = new URI(destinataire);
+			/* create the webSocket connection */
+			client.start();
+			URI echoURI = new URI(address);
 			client.connect(socket, echoURI);
 			
 		}catch (Throwable t){
 			t.printStackTrace();
-		}finally {
-			try {
-				client.stop();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
 		}
 	}
 	
@@ -55,7 +53,6 @@ public class Connect extends Thread {
 
 		int responseCode = con.getResponseCode();
 		System.out.println("\nSending 'GET' request to URL : " + url);
-
 		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 
 		while ((inputLine = in.readLine()) != null) {
@@ -67,18 +64,6 @@ public class Connect extends Thread {
 		
 		return message_recu;
 	}
-	
-//	
-//	/**
-//	 * set &  receiver
-//	 */
-//	public void setDest(String dest){
-//		this.dest = dest;
-//	}
-//	
-//	public String getDest(){
-//		return this.dest;
-//	}
 	
 	/**
 	 * return client

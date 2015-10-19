@@ -1,17 +1,29 @@
+package Map;
+
+
 import java.util.ArrayList;
 
 public class Streets {
 
 	/* declaration of variables */
 	private String name;
-	private ArrayList<Vertices> path;
+	private ArrayList<String> path;
 	private boolean oneway; 
 	
+	public Streets(){
+		
+	}
+	
 	/* constructor streets */
-	public Streets(String n, ArrayList<Vertices> list, boolean b){
-		this.setName(n);
-		this.setPath(list);
+	public Streets(String name, ArrayList<String> path, boolean b){
+		this.setName(name);
+		this.setPath(path);
 		this.setOneway(b);
+	}
+
+	@Override
+	public String toString() {
+		return "Streets [name=" + name + ", path=" + path + ", oneway=" + oneway + "]";
 	}
 
 	/**
@@ -31,22 +43,6 @@ public class Streets {
 	}
 
 	/**
-	 * GET PATH
-	 * @return path
-	 */
-	public ArrayList<Vertices> getPath() {
-		return path;
-	}
-
-	/**
-	 * SET PATH
-	 * @param path
-	 */
-	public void setPath(ArrayList<Vertices> path) {
-		this.path = path;
-	}
-
-	/**
 	 * GET ONEWAY
 	 * @return oneway
 	 */
@@ -61,4 +57,13 @@ public class Streets {
 	public void setOneway(boolean oneway) {
 		this.oneway = oneway;
 	}
+
+	public ArrayList<String> getPath() {
+		return path;
+	}
+
+	public void setPath(ArrayList<String> path) {
+		this.path = path;
+	}
+
 }
