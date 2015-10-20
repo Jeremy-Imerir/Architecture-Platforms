@@ -4,295 +4,113 @@
 import signal, sys, json, re
 from SimpleWebSocketServer import WebSocket, SimpleWebSocketServer
 import time
-from threading import Thread
-import numpy
-from heapq import *
+import threading
+import shortestfield, math, yaml
+from transformjson import Transformer
 
 listOfClients = []
-adresse = '172.30.0.227'
+maxOfClients = 2
+adresse = '0.0.0.0'
 port = 8000
-thread = None
-
-
-def heuristic(a, b):
-    return (b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2
-
-def astar(array, start, goal):
-
-    neighbors = [(0,1),(0,-1),(1,0),(-1,0)]
-
-    close_set = set()
-    came_from = {}
-    gscore = {start:0}
-    fscore = {start:heuristic(start, goal)}
-    oheap = []
-
-    heappush(oheap, (fscore[start], start))
-    
-    while oheap:
-
-        current = heappop(oheap)[1]
-
-        if current == goal:
-            data = []
-            while current in came_from:
-                data.append(current)
-                current = came_from[current]
-            return data
-
-        close_set.add(current)
-        for i, j in neighbors:
-            neighbor = current[0] + i, current[1] + j            
-            tentative_g_score = gscore[current] + heuristic(current, neighbor)
-            if 0 <= neighbor[0] < array.shape[0]:
-                if 0 <= neighbor[1] < array.shape[1]:                
-                    if array[neighbor[0]][neighbor[1]] == 1:
-                        continue
-                else:
-                    # array bound y walls
-                    continue
-            else:
-                # array bound x walls
-                continue
-                
-            if neighbor in close_set and tentative_g_score >= gscore.get(neighbor, 0):
-                continue
-                
-            if  tentative_g_score < gscore.get(neighbor, 0) or neighbor not in [i[1]for i in oheap]:
-                came_from[neighbor] = current
-                gscore[neighbor] = tentative_g_score
-                fscore[neighbor] = tentative_g_score + heuristic(neighbor, goal)
-                heappush(oheap, (fscore[neighbor], neighbor))
-                
-    return False
-
-# nmap = numpy.array([
-    # [0,0,0,0,0,0,0,0,0,0 ,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0],
-    # [1,1,1,1,1,1,1,1,1,0 ,1,1,1,1,1,1,1,1,1,0, 1,1,1,1,1,1,1,1,1,0],
-    # [0,0,0,0,0,0,0,0,0,0 ,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0],
-    # [1,0,1,1,1,1,1,1,1,1 ,1,0,1,1,1,1,1,1,1,1, 1,0,1,1,1,1,1,1,1,1],
-    # [0,0,0,0,0,0,0,0,0,0 ,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0],
-    # [1,1,1,1,1,1,1,1,1,0 ,1,1,1,1,1,1,1,1,1,0, 1,1,1,1,1,1,1,1,1,0],
-    # [0,0,0,0,0,0,0,0,0,0 ,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0],
-    # [1,0,1,1,1,1,1,1,1,1 ,1,0,1,1,1,1,1,1,1,1, 1,0,1,1,1,1,1,1,1,1],
-    # [0,0,0,0,0,0,0,0,0,0 ,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0],
-    # [1,1,1,1,1,1,1,1,1,0 ,1,1,1,1,1,1,1,1,1,0, 1,1,1,1,1,1,1,1,1,0]])
-    
-# print astar(nmap, (0,0), (10,13))
-
+clientThread = None
+Taxi = None
+disconnected = 0
 
 # Creer le tableau via le json avant
 # Gerer la position du cab
 
-json_string = """
-{
-    "areas": [
-        {
-            "name": "Quartier Ouest",
-            "map": {
-                "weight": {
-                    "w": 1,
-                    "h": 2
-                },
-                "vertices": [
-                    {
-                        "name": "a",
-                        "x": 0,
-                        "y": 1
-                    },
-                    {
-                        "name": "b",
-                        "x": 1,
-                        "y": 1
-                    },
-                    {
-                        "name": "c",
-                        "x": 1,
-                        "y": 0.5
-                    },
-                    {
-                        "name": "d",
-                        "x": 0.5,
-                        "y": 0.5
-                    },
-                    {
-                        "name": "e",
-                        "x": 0.5,
-                        "y": 0
-                    },
-                    {
-                        "name": "f",
-                        "x": 1,
-                        "y": 0
-                    }
-                ],
-                "streets": [
-                    {
-                        "name": "mb",
-                        "path": [
-                            "a",
-                            "b"
-                        ],
-                        "oneway": false
-                    },
-                    {
-                        "name": "mb",
-                        "path": [
-                            "b",
-                            "c"
-                        ],
-                        "oneway": false
-                    },
-                    {
-                        "name": "mb",
-                        "path": [
-                            "c",
-                            "d"
-                        ],
-                        "oneway": false
-                    },
-                    {
-                        "name": "mb",
-                        "path": [
-                            "d",
-                            "e"
-                        ],
-                        "oneway": false
-                    },
-                    {
-                        "name": "mb",
-                        "path": [
-                            "e",
-                            "f"
-                        ],
-                        "oneway": false
-                    }
-                ],
-                "bridges": [
-                    {
-                        "from": "b",
-                        "to": {
-                            "area": "Quartier Sud",
-                            "vertex": "h"
-                        },
-                        "weight": 2
-                    }
-                ]
-            }
-        },
-        {
-            "name": "Quartier Centre",
-            "map": {
-                "weight": {
-                    "w": 1,
-                    "h": 1
-                },
-                "vertices": [
-                    {
-                        "name": "a",
-                        "x": 1,
-                        "y": 1
-                    },
-                    {
-                        "name": "m",
-                        "x": 0,
-                        "y": 1
-                    },
-                    {
-                        "name": "h",
-                        "x": 0.5,
-                        "y": 0
-                    }
-                ],
-                "streets": [
-                    {
-                        "name": "ah",
-                        "path": [
-                            "a",
-                            "h"
-                        ],
-                        "oneway": false
-                    },
-                    {
-                        "name": "mh",
-                        "path": [
-                            "m",
-                            "h"
-                        ],
-                        "oneway": false
-                    }
-                ],
-                "bridges": [
-                    {
-                        "from": "h",
-                        "to": {
-                            "area": "Quartier Nord",
-                            "vertex": "b"
-                        },
-                        "weight": 2
-                    }
-                ]
-            }
-        },
-        {
-            "name": "Quartier Est",
-            "map": {
-                "weight": {
-                    "w": 1,
-                    "h": 1
-                },
-                "vertices": [
-                    {
-                        "name": "a",
-                        "x": 1,
-                        "y": 1
-                    },
-                    {
-                        "name": "m",
-                        "x": 0,
-                        "y": 1
-                    },
-                    {
-                        "name": "h",
-                        "x": 0.5,
-                        "y": 0
-                    }
-                ],
-                "streets": [
-                    {
-                        "name": "ah",
-                        "path": [
-                            "a",
-                            "h"
-                        ],
-                        "oneway": false
-                    },
-                    {
-                        "name": "mh",
-                        "path": [
-                            "m",
-                            "h"
-                        ],
-                        "oneway": false
-                    }
-                ],
-                "bridges": [
-                    {
-                        "from": "h",
-                        "to": {
-                            "area": "Quartier Nord",
-                            "vertex": "b"
-                        },
-                        "weight": 2
-                    }
-                ]
-            }
-        }
-    ]
-}
-"""
-json_string = json_string.replace('\n', ' ')
+with open('map.json', 'r') as content_file:
+    content = content_file.read()
+
+json_string = content
+json_string = json_string.replace('\r\n', ' ')
 json_string = re.sub(' +', ' ', json_string)
+parsed_json = json.loads(json_string, "utf-8")
+
+Graphique = Transformer()
+Graph = Graphique.transform(parsed_json)
+
+print Graph
+
+class Taxi(threading.Thread):
+	def __init__(self):
+		super(Taxi, self).__init__()
+		self.x = 0
+		self.y = 0
+		self.status = "Free"
+		self.destination = ""
+		self.distanceToEnd = ""
+		self.listOfPoints = []
+	def run (self):
+		# VertexList = Graphique.VertexList
+		# self.status = "Busy"
+		# for i in range(len(VertexList[0])) :
+			# if vertexBegin == VertexList[0][i]:
+				# vertexBegin = VertexList[1][i]
+
+			# elif vertexEnd == VertexList[0][i]:
+				# vertexEnd = VertexList[1][i]
+
+		# vertexBegin = vertexBegin.split(";")
+		# vertexEnd = vertexEnd.split(";")
+		# if vertexBegin[0] > vertexEnd[0]:
+			# negativex = 1
+		# else:
+			# negativex = -1
+
+		# if vertexBegin[1] > vertexEnd[1]:
+			# negativey = 1
+		# else:
+			# negativey = -1
+
+		global listOfClients
+		global maxOfClients
+		while True :
+			if len(listOfClients) == maxOfClients:
+				if len(self.listOfPoints)==0:
+					print "je suis libre"
+					self.status = "Free"
+				else:
+					print str(self.listOfPoints[0])+" "+str(self.listOfPoints[1])
+					self.status = "Busy"
+			else:
+				print "il manque des gens !"
+			time.sleep(1)
+		# self.stop()
+
+	def stop(self):
+		self._stopevent.set() 
+		global disconnected
+		disconnected = 1
+		print "Client thread stopped"
+			
+
+class SendTaxiInfos(threading.Thread): 
+    def __init__(self, clientSocket): 
+		threading.Thread.__init__(self) 
+		self.client = clientSocket 
+		self._stopevent = threading.Event( ) 
+		global disconnected
+		disconnected = 0
+    def run(self):
+		string = " "
+		global disconnected
+		while disconnected == 0:
+			time.sleep(5)
+			if len(listOfClients)==maxOfClients:
+				string = '{"cab":{"position":{"x":'+str(Taxi.x)+',"y":'+str(Taxi.y)+'},"goTo":"'+Taxi.destination+'","status":"'+Taxi.status+'","distanceToEnd":'+str(Taxi.distanceToEnd)+'}}'
+				print string
+				self.client.sendMessage(unicode(string))
+			else:
+				string = "En attente d'autres utilisateurs"
+				print string
+				self.client.sendMessage(unicode(string))
+    def stop(self):
+		self._stopevent.set() 
+		global disconnected
+		disconnected = 1
+		print "Client thread stopped"
+  
 
 class WebsocketServer(WebSocket):
 
@@ -300,23 +118,46 @@ class WebsocketServer(WebSocket):
 
 	def handleMessage(self):
 		print self.data, 'sent'
+		try:
+			json_object = json.loads(self.data)
+		except ValueError, e:
+			json_object = None
+			self.sendMessage(unicode('{"error":"not json"}'))
+		if len(listOfClients)==maxOfClients:
+			if json_object!=None:
+				cabRequest = json_object["cabRequest"]
+				if Taxi.status == "Free":
+					self.sendMessage(unicode('{"status":"free"}'))
+					distance, points = shortestfield.dij_rec(Graph, cabRequest["from"], cabRequest["to"])
+					Taxi.listOfPoints.extend(points)
+					Taxi.distanceToEnd = distance
+					Taxi.destination = cabRequest["to"]
+				else :
+					self.sendMessage(unicode('{"status":"busy"}'))
+			
+			
 	
 	def handleConnected(self):
 		# Accept connection
-		if len(listOfClients)<4:
+		if len(listOfClients)<maxOfClients:
 			listOfClients.append(self)
-			self.sendMessage(unicode(json_string))
+			if self.address[0] == "192.168.0.2":
+				self.sendMessage(unicode("salut arduino"))
+			else :
+				self.sendMessage(unicode('{"clientNumber":'+str(len(listOfClients))+","+json_string[2:]))
 			print self.address, 'connected'
-	#		global thread
-	#		if thread is None:
-	#			thread = Thread(target=send_cab_pos)
-	#			thread.start()
+			
+			global clientThread
+			clientThread = SendTaxiInfos(self)
+			clientThread.start()
 		#Reject connection
 		else:
 			self.rejected = 1
 			handleClose(self)
 	
 	def handleClose(self):
+		global clientThread
+		clientThread.stop()
 		# Connection closed by client
 		if self.rejected == 0:
 			listOfClients.remove(self)
@@ -328,18 +169,11 @@ class WebsocketServer(WebSocket):
 			self.sendMessage(unicode("Server full, client rejected"))
 			print self.address, 'rejected. Full'
 
-	# def send_map(self):
-		# while True:
-			# if len(listOfClients)==4:
-				# time.sleep(1)
-				# str = ''
-				# self.sendMessage(unicode(str))
-			# else:
-				# time.sleep(10)
-				# self.sendMessage(unicode("En attente d'autres utilisateurs"))
-
 
 #Create websocket
 server = SimpleWebSocketServer(adresse, port, WebsocketServer)
 print "Serveur en ecoute sur l'adresse : "+adresse+" et sur le port : "+str(port)
+
+Taxi = Taxi()
+Taxi.start()
 server.serveforever()

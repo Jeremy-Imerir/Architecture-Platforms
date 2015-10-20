@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-import os,sys
+import os
  
 #Create custom HTTPRequestHandler class
 class KodeFunHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -16,15 +16,18 @@ class KodeFunHTTPRequestHandler(BaseHTTPRequestHandler):
 	self.send_header('Content-type','text-html')
 	self.end_headers()
 	#send websocket address
-	self.wfile.write('{"IP":"172.30.0.227","port":8000}')
+	if (self.client_address[0]) == "192.168.0.2":
+		self.wfile.write('{"IP":"192.168.0.1","port":8000}')
+	else :
+		self.wfile.write('{"IP":"172.30.0.227","port":8000}')
 	return
   
-def run():
-  print('http server is starting on :'+sys.argv[1])
-  server_address = (sys.argv[1], 8080)
+def run(adress):
+  print('http server is starting on :'+adress)
+  server_address = (adress, 8090)
   httpd = HTTPServer(server_address, KodeFunHTTPRequestHandler)
   print('http server is running...')
   httpd.serve_forever()
   
 if __name__ == '__main__':
-  run()
+  run("0.0.0.0")
