@@ -4,7 +4,7 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import os
  
 #Create custom HTTPRequestHandler class
-class KodeFunHTTPRequestHandler(BaseHTTPRequestHandler):
+class HttpRequestHandler(BaseHTTPRequestHandler):
   
   #handle GET command
   def do_GET(self):
@@ -25,7 +25,7 @@ class KodeFunHTTPRequestHandler(BaseHTTPRequestHandler):
 def run(adress):
   print('http server is starting on :'+adress)
   server_address = (adress, 8090)
-  httpd = HTTPServer(server_address, KodeFunHTTPRequestHandler)
+  httpd = HTTPServer(server_address, HttpRequestHandler)
   print('http server is running...')
   httpd.serve_forever()
   

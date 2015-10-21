@@ -9,12 +9,13 @@ import shortestfield, math, yaml
 from transformjson import Transformer
 
 listOfClients = []
-maxOfClients = 1
+maxOfClients = 3
 adresse = '0.0.0.0'
-port = 8001
+port = 8000
 clientThread = None
 Taxi = None
 disconnected = 0
+rejected = 0
 
 # Creer le tableau via le json avant
 # Gerer la position du cab
@@ -39,8 +40,8 @@ class Taxi(threading.Thread):
 		self.x = 0
 		self.y = 1
 		self.status = "Free"
-		self.destination = ""
-		self.distanceToEnd = ""
+		self.destination = "None"
+		self.distanceToEnd = 0
 		self.listOfPoints = []
 
 	def run (self):
@@ -101,7 +102,7 @@ class Taxi(threading.Thread):
 							del self.listOfPoints[0]
 						except:
 							self.distanceToEnd = 0
-							self.goTo = ""
+							self.destination = " "
 							del self.listOfPoints[:]
 							break
 
@@ -126,7 +127,8 @@ class SendTaxiInfos(threading.Thread):
 		while disconnected == 0:
 			time.sleep(1)
 			if len(listOfClients)==maxOfClients:
-				string = '{"cab":{"position":{"x":'+str(Taxi.x)+',"y":'+str(Taxi.y)+'},"goTo":"'+Taxi.destination+'","status":"'+Taxi.status+'","distanceToEnd":'+str(Taxi.distanceToEnd)+'}}'
+				# string = '{"cab":{"position":{"x":'+str(Taxi.x)+',"y":'+str(Taxi.y)+'},"goTo":"'+Taxi.destination+'","status":"'+Taxi.status+'","distanceToEnd":'+str(Taxi.distanceToEnd)+'}}'
+				string = '{"cab":{"x":'+str(Taxi.x)+',"y":'+str(Taxi.y)+',"goTo":"'+Taxi.destination+'","status":"'+Taxi.status+'","distanceToEnd":'+str(Taxi.distanceToEnd)+'}}'
 				print string
 				self.client.sendMessage(unicode(string))
 			else:
@@ -142,10 +144,9 @@ class SendTaxiInfos(threading.Thread):
 
 class WebsocketServer(WebSocket):
 
-	rejected = 0
-
 	def handleMessage(self):
-		print self.data, 'sent'
+		global listOfClients
+		print str(self.data) + ' sent from :'+str(self.address)
 		try:
 			json_object = json.loads(self.data)
 		except ValueError, e:
@@ -154,26 +155,24 @@ class WebsocketServer(WebSocket):
 		if len(listOfClients)==maxOfClients:
 			if json_object!=None:
 				cabRequest = json_object["cabRequest"]
-				# if self.address[0] == "192.168.0.2":
-				if Taxi.status == "Free":
-					self.sendMessage(unicode('{"status":"free"}'))
-					distance, points = shortestfield.dij_rec(Graph, cabRequest["from"], cabRequest["to"])
-		
-					Taxi.listOfPoints.extend(points)
-					Taxi.distanceToEnd = distance
-					Taxi.destination = cabRequest["to"]
-				else :
-					self.sendMessage(unicode('{"status":"busy"}'))
-				# else:
-					# for i in range(len(listOfClients)):
-						# currentClient = listOfClients[i]
-						# if currentClient.address[0] == "192.168.0.2":
-							# currentClient.sendMessage(unicode(self.data))
+				if self.address[0] == "192.168.0.2":
+					if Taxi.status == "Free":
+						distance, points = shortestfield.dij_rec(Graph, cabRequest["from"], cabRequest["to"])
+			
+						Taxi.listOfPoints.extend(points)
+						Taxi.distanceToEnd = distance
+						Taxi.destination = cabRequest["to"]
+				else:
+					for i in range(len(listOfClients)):
+						currentClient = listOfClients[i]
+						if currentClient.address[0] == "192.168.0.2":
+							currentClient.sendMessage(unicode(self.data))
 							
 			
 			
 	
 	def handleConnected(self):
+		global listOfClients
 		# Accept connection
 		if len(listOfClients)<maxOfClients:
 			listOfClients.append(self)
@@ -188,16 +187,17 @@ class WebsocketServer(WebSocket):
 			clientThread.start()
 		#Reject connection
 		else:
-			self.rejected = 1
+			global rejected
+			rejected = 1
 			handleClose(self)
 	
 	def handleClose(self):
 		global clientThread
+		global rejected
 		clientThread.stop()
 		# Connection closed by client
-		if self.rejected == 0:
+		if rejected == 0:
 			listOfClients.remove(self)
-			# self.rejected = 0
 			print self.address, 'closed'
 			
 		# Connection closed by server
