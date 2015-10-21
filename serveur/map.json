@@ -1,0 +1,274 @@
+
+{
+    "areas": [
+        {
+            "name": "Quartier Ouest",
+            "map": {
+                "weight": {
+                    "w": 1,
+                    "h": 1
+                },
+                "vertices": [
+                    {
+                        "name": "a",
+                        "x": 0,
+                        "y": 1
+                    },
+                    {
+                        "name": "b",
+                        "x": 1,
+                        "y": 1
+                    },
+                    {
+                        "name": "c",
+                        "x": 1,
+                        "y": 0.5
+                    },
+                    {
+                        "name": "d",
+                        "x": 0.5,
+                        "y": 0.5
+                    },
+                    {
+                        "name": "e",
+                        "x": 0.5,
+                        "y": 0
+                    },
+                    {
+                        "name": "f",
+                        "x": 1,
+                        "y": 0
+                    }
+                ],
+                "streets": [
+                    {
+                        "name": "ab",
+                        "path": [
+                            "a",
+                            "b"
+                        ],
+                        "oneway": false
+                    },
+                    {
+                        "name": "bc",
+                        "path": [
+                            "b",
+                            "c"
+                        ],
+                        "oneway": false
+                    },
+                    {
+                        "name": "cd",
+                        "path": [
+                            "c",
+                            "d"
+                        ],
+                        "oneway": false
+                    },
+                    {
+                        "name": "de",
+                        "path": [
+                            "d",
+                            "e"
+                        ],
+                        "oneway": false
+                    },
+                    {
+                        "name": "ef",
+                        "path": [
+                            "e",
+                            "f"
+                        ],
+                        "oneway": false
+                    }
+                ],
+                "bridges": [
+                    {
+                        "from": "a",
+                        "to": {
+                            "area": "Quartier Est",
+                            "vertex": "o"
+                        },
+                        "weight": 2
+                    },
+                    {
+                        "from": "b",
+                        "to": {
+                            "area": "Quartier Centre",
+                            "vertex": "l"
+                        },
+                        "weight": 2
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Quartier Centre",
+            "map": {
+                "weight": {
+                    "w": 1,
+                    "h": 1
+                },
+                "vertices": [
+                    {
+                        "name": "g",
+                        "x": 1,
+                        "y": 1
+                    },
+                    {
+                        "name": "h",
+                        "x": 0,
+                        "y": 1
+                    },
+                    {
+                        "name": "i",
+                        "x": 0.5,
+                        "y": 1
+                    },
+                    {
+                        "name": "j",
+                        "x": 0.5,
+                        "y": 0
+                    },
+                    {
+                        "name": "k",
+                        "x": 1,
+                        "y": 0
+                    }
+                ],
+                "streets": [
+                    {
+                        "name": "gh",
+                        "path": [
+                            "g",
+                            "h"
+                        ],
+                        "oneway": false
+                    },
+                    {
+                        "name": "ij",
+                        "path": [
+                            "i",
+                            "j"
+                        ],
+                        "oneway": false
+                    },
+                    {
+                        "name": "jk",
+                        "path": [
+                            "j",
+                            "k"
+                        ],
+                        "oneway": false
+                    }
+                ],
+                "bridges": [
+                    {
+                        "from": "g",
+                        "to": {
+                            "area": "Quartier Ouest",
+                            "vertex": "b"
+                        },
+                        "weight": 2
+                    },
+                    {
+                        "from": "h",
+                        "to": {
+                            "area": "Quartier Est",
+                            "vertex": "b"
+                        },
+                        "weight": 2
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Quartier Est",
+            "map": {
+                "weight": {
+                    "w": 1,
+                    "h": 1
+                },
+                "vertices": [
+                    {
+                        "name": "l",
+                        "x": 0,
+                        "y": 1
+                    },
+                    {
+                        "name": "m",
+                        "x": 0,
+                        "y": 0.5
+                    },
+                    {
+                        "name": "n",
+                        "x": 1,
+                        "y": 0.5
+                    },
+                    {
+                        "name": "o",
+                        "x": 1,
+                        "y": 0
+                    },
+                    {
+                        "name": "p",
+                        "x": 0.5,
+                        "y": 0
+                    }
+                ],
+                "streets": [
+                    {
+                        "name": "lm",
+                        "path": [
+                            "l",
+                            "m"
+                        ],
+                        "oneway": false
+                    },
+                    {
+                        "name": "mn",
+                        "path": [
+                            "m",
+                            "n"
+                        ],
+                        "oneway": false
+                    },
+                    {
+                        "name": "no",
+                        "path": [
+                            "n",
+                            "o"
+                        ],
+                        "oneway": false
+                    },
+                    {
+                        "name": "po",
+                        "path": [
+                            "p",
+                            "o"
+                        ],
+                        "oneway": false
+                    }
+                ],
+                "bridges": [
+                    {
+                        "from": "l",
+                        "to": {
+                            "area": "Quartier Centre",
+                            "vertex": "h"
+                        },
+                        "weight": 2
+                    },
+                    {
+                        "from": "o",
+                        "to": {
+                            "area": "Quartier Ouest",
+                            "vertex": "a"
+                        },
+                        "weight": 2
+                    }
+                ]
+            }
+        }
+    ]
+}
