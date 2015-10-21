@@ -27,6 +27,7 @@ def run(adress):
   server_address = (adress, 8090)
   httpd = HTTPServer(server_address, HttpRequestHandler)
   print('http server is running...')
+  #Bind the socket on http and running forever
   httpd.serve_forever()
   
 if __name__ == '__main__':

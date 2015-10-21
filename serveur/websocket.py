@@ -17,25 +17,26 @@ Taxi = None
 disconnected = 0
 rejected = 0
 
-# Creer le tableau via le json avant
-# Gerer la position du cab
-
+#Get json from file
 with open('map.json', 'r') as content_file:
     content = content_file.read()
 
-json_string = content
+#Delete returns and multiple spaces
 json_string = content.replace('\r\n', ' ')
 json_string = re.sub(' +', ' ', json_string)
 parsed_json = json.loads(json_string, "utf-8")
 
+#Transformer object for creating a graph
 Graphique = Transformer()
 Graph = Graphique.transform(parsed_json)
 VertexList = Graphique.VertexList
 
 print Graph
 
+#Class of the taxi
 class Taxi(threading.Thread):
 	def __init__(self):
+		#Intialize variables
 		super(Taxi, self).__init__()
 		self.x = 0
 		self.y = 1
@@ -50,13 +51,16 @@ class Taxi(threading.Thread):
 		global VertexList
 		
 		while True :
+			#If everyone is here
 			if len(listOfClients) == maxOfClients:
 				if len(self.listOfPoints)==0:
 					self.status = "Free"
 					time.sleep(1)
 				else:
+					#If taxi has some points to go
 					for i in range(len(self.listOfPoints)):
-
+						
+						#Taxi is busy
 						self.status = "Busy"
 						firstPoint = VertexList[0].index(str(self.listOfPoints[0]))
 						try:
@@ -67,7 +71,7 @@ class Taxi(threading.Thread):
 							firstPoint = firstPoint.split(";")
 							secondPoint = secondPoint.split(";")
 							
-							# Directement sur les points
+							# Jump on vertexes
 							self.x = secondPoint[0]
 							self.y = secondPoint[1]
 							time.sleep(1)
@@ -76,7 +80,7 @@ class Taxi(threading.Thread):
 							ydistance = abs(float(firstPoint[1]) - float(secondPoint[1]))
 							distance = math.sqrt((xdistance ** 2) + (ydistance ** 2))
 
-							#On y va avec un pas
+							# Walk to vertexes
 							
 							# if xdistance <= 0 :
 								# negativeX = -1
@@ -127,7 +131,7 @@ class SendTaxiInfos(threading.Thread):
 		while disconnected == 0:
 			time.sleep(1)
 			if len(listOfClients)==maxOfClients:
-				# string = '{"cab":{"position":{"x":'+str(Taxi.x)+',"y":'+str(Taxi.y)+'},"goTo":"'+Taxi.destination+'","status":"'+Taxi.status+'","distanceToEnd":'+str(Taxi.distanceToEnd)+'}}'
+				#Send cab infos to everyone
 				string = '{"cab":{"x":'+str(Taxi.x)+',"y":'+str(Taxi.y)+',"goTo":"'+Taxi.destination+'","status":"'+Taxi.status+'","distanceToEnd":'+str(Taxi.distanceToEnd)+'}}'
 				print string
 				self.client.sendMessage(unicode(string))
@@ -147,24 +151,32 @@ class WebsocketServer(WebSocket):
 	def handleMessage(self):
 		global listOfClients
 		print str(self.data) + ' sent from :'+str(self.address)
+		#If i receive json
 		try:
 			json_object = json.loads(self.data)
 		except ValueError, e:
 			json_object = None
 			self.sendMessage(unicode('{"error":"not json"}'))
+		#If everyone here
 		if len(listOfClients)==maxOfClients:
 			if json_object!=None:
+				# Get cab request
 				cabRequest = json_object["cabRequest"]
+				#If it's a request from arduino
 				if self.address[0] == "192.168.0.2":
 					if Taxi.status == "Free":
+						#I send the points to Dijkstra algorithm for getting all points
 						distance, points = shortestfield.dij_rec(Graph, cabRequest["from"], cabRequest["to"])
 			
+						#Update cab infos
 						Taxi.listOfPoints.extend(points)
 						Taxi.distanceToEnd = distance
 						Taxi.destination = cabRequest["to"]
+				# If it's another client
 				else:
 					for i in range(len(listOfClients)):
 						currentClient = listOfClients[i]
+						#I send it back to the arduino
 						if currentClient.address[0] == "192.168.0.2":
 							currentClient.sendMessage(unicode(self.data))
 							
@@ -176,8 +188,10 @@ class WebsocketServer(WebSocket):
 		# Accept connection
 		if len(listOfClients)<maxOfClients:
 			listOfClients.append(self)
+			#If it's arduino
 			if self.address[0] == "192.168.0.2":
 				self.sendMessage(unicode("salut arduino"))
+			#If it's another client
 			else :
 				self.sendMessage(unicode('{"clientNumber":'+str(len(listOfClients))+","+json_string[2:]))
 			print self.address, 'connected'
