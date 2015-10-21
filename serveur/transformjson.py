@@ -39,8 +39,6 @@ class Transformer():
 				areamapstreetspath = areamapstreets[k]["path"]
 				streetList.append(str(areamapstreetspath[0])+";"+str(areamapstreetspath[1]))
 
-
-		# Graph = "{"
 		Graph={}
 		alreadyPut = []
 		streetList = sorted(streetList, key=str.lower)
