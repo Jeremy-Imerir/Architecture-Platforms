@@ -9,9 +9,9 @@ import shortestfield, math, yaml
 from transformjson import Transformer
 
 listOfClients = []
-maxOfClients = 2
+maxOfClients = 1
 adresse = '0.0.0.0'
-port = 8000
+port = 8001
 clientThread = None
 Taxi = None
 disconnected = 0
@@ -23,12 +23,13 @@ with open('map.json', 'r') as content_file:
     content = content_file.read()
 
 json_string = content
-json_string = json_string.replace('\r\n', ' ')
+json_string = content.replace('\r\n', ' ')
 json_string = re.sub(' +', ' ', json_string)
 parsed_json = json.loads(json_string, "utf-8")
 
 Graphique = Transformer()
 Graph = Graphique.transform(parsed_json)
+VertexList = Graphique.VertexList
 
 print Graph
 
@@ -36,47 +37,74 @@ class Taxi(threading.Thread):
 	def __init__(self):
 		super(Taxi, self).__init__()
 		self.x = 0
-		self.y = 0
+		self.y = 1
 		self.status = "Free"
 		self.destination = ""
 		self.distanceToEnd = ""
 		self.listOfPoints = []
+
 	def run (self):
-		# VertexList = Graphique.VertexList
-		# self.status = "Busy"
-		# for i in range(len(VertexList[0])) :
-			# if vertexBegin == VertexList[0][i]:
-				# vertexBegin = VertexList[1][i]
-
-			# elif vertexEnd == VertexList[0][i]:
-				# vertexEnd = VertexList[1][i]
-
-		# vertexBegin = vertexBegin.split(";")
-		# vertexEnd = vertexEnd.split(";")
-		# if vertexBegin[0] > vertexEnd[0]:
-			# negativex = 1
-		# else:
-			# negativex = -1
-
-		# if vertexBegin[1] > vertexEnd[1]:
-			# negativey = 1
-		# else:
-			# negativey = -1
-
 		global listOfClients
 		global maxOfClients
+		global VertexList
+		
 		while True :
 			if len(listOfClients) == maxOfClients:
 				if len(self.listOfPoints)==0:
-					print "je suis libre"
 					self.status = "Free"
+					time.sleep(1)
 				else:
-					print str(self.listOfPoints[0])+" "+str(self.listOfPoints[1])
-					self.status = "Busy"
-			else:
-				print "il manque des gens !"
-			time.sleep(1)
-		# self.stop()
+					for i in range(len(self.listOfPoints)):
+
+						self.status = "Busy"
+						firstPoint = VertexList[0].index(str(self.listOfPoints[0]))
+						try:
+							secondPoint = VertexList[0].index(str(self.listOfPoints[1]))
+							
+							firstPoint = VertexList[1][firstPoint]
+							secondPoint = VertexList[1][secondPoint]
+							firstPoint = firstPoint.split(";")
+							secondPoint = secondPoint.split(";")
+							
+							# Directement sur les points
+							self.x = secondPoint[0]
+							self.y = secondPoint[1]
+							time.sleep(1)
+							
+							xdistance = abs(float(firstPoint[0]) - float(secondPoint[0]))
+							ydistance = abs(float(firstPoint[1]) - float(secondPoint[1]))
+							distance = math.sqrt((xdistance ** 2) + (ydistance ** 2))
+
+							#On y va avec un pas
+							
+							# if xdistance <= 0 :
+								# negativeX = -1
+							# else :
+								# negativeX = 1
+
+							# if ydistance <= 0 :
+								# negativeY = -1
+							# else :
+								# negativeY = 1
+							
+							
+
+							# temps = 9
+							# kmhX = xdistance/temps
+							# kmhY = ydistance/temps
+							# for j in range(temps):
+								# self.x = self.x + (kmhX*-1)
+								# self.y = self.y + (kmhY*-1)
+								# time.sleep(0.5)
+								
+							self.distanceToEnd = self.distanceToEnd - distance
+							del self.listOfPoints[0]
+						except:
+							self.distanceToEnd = 0
+							self.goTo = ""
+							del self.listOfPoints[:]
+							break
+
 
 	def stop(self):
 		self._stopevent.set() 
@@ -96,7 +124,7 @@ class SendTaxiInfos(threading.Thread):
 		string = " "
 		global disconnected
 		while disconnected == 0:
-			time.sleep(5)
+			time.sleep(1)
 			if len(listOfClients)==maxOfClients:
 				string = '{"cab":{"position":{"x":'+str(Taxi.x)+',"y":'+str(Taxi.y)+'},"goTo":"'+Taxi.destination+'","status":"'+Taxi.status+'","distanceToEnd":'+str(Taxi.distanceToEnd)+'}}'
 				print string
@@ -126,14 +154,22 @@ class WebsocketServer(WebSocket):
 		if len(listOfClients)==maxOfClients:
 			if json_object!=None:
 				cabRequest = json_object["cabRequest"]
+				# if self.address[0] == "192.168.0.2":
 				if Taxi.status == "Free":
 					self.sendMessage(unicode('{"status":"free"}'))
 					distance, points = shortestfield.dij_rec(Graph, cabRequest["from"], cabRequest["to"])
+		
 					Taxi.listOfPoints.extend(points)
 					Taxi.distanceToEnd = distance
 					Taxi.destination = cabRequest["to"]
 				else :
 					self.sendMessage(unicode('{"status":"busy"}'))
+				# else:
+					# for i in range(len(listOfClients)):
+						# currentClient = listOfClients[i]
+						# if currentClient.address[0] == "192.168.0.2":
+							# currentClient.sendMessage(unicode(self.data))
+							
 			
 			
 	
