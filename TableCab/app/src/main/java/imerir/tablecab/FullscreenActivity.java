@@ -1,17 +1,23 @@
 package imerir.tablecab;
 
 import android.annotation.SuppressLint;
-import android.os.Build;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -27,6 +33,7 @@ public class FullscreenActivity extends AppCompatActivity {
     WebSocketClient mWebSocketClient;
     String websocketip = null;
     String websocketport= null;
+    drawSquare drawview;
     /**
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
@@ -49,34 +56,47 @@ public class FullscreenActivity extends AppCompatActivity {
     private View disconnectionButton;
     private boolean mVisible;
 
+    private int ifJsonNumber = 0;
+    private int ifJsonCab= 0;
+    private JSONObject cab;
+    private String clientNumber;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_fullscreen);
 
+        LinearLayout drawLayout = (LinearLayout) findViewById(R.id.drawLayout);
+
+        drawview = new drawSquare(this);
+        drawLayout.addView(drawview);
+
         mVisible = true;
-        mContentView = findViewById(R.id.fullscreen_content);
-        disconnectionButton = findViewById(R.id.disconnection);
+        /*disconnectionButton = findViewById(R.id.disconnection);
 
-
-        // Set up the user interaction to manually show or hide the system UI.
-        mContentView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //toggle();
-            }
-        });
         disconnectionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 mWebSocketClient.close();
             }
-        });
-
+        });*/
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        // MotionEvent object holds X-Y values
+        if(event.getAction() == MotionEvent.ACTION_DOWN) {
+            String text = "You click at x = " + event.getX() + " and y = " + event.getY();
+            Log.d("Click ", text);
+            Toast.makeText(this, text, Toast.LENGTH_LONG).show();
+        }
+        return super.onTouchEvent(event);
     }
 
     @Override
@@ -105,6 +125,14 @@ public class FullscreenActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         connectWebSocket();
+
+        DisplayMetrics displaymetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+
+        int height = displaymetrics.heightPixels - 100;
+        int width = displaymetrics.widthPixels;
+
+        System.out.println("Height " + height + " and width " + width);
     }
     private void connectWebSocket() {
         URI uri;
@@ -119,7 +147,7 @@ public class FullscreenActivity extends AppCompatActivity {
             @Override
             public void onOpen(ServerHandshake serverHandshake) {
                 Log.i("Websocket", "Opened");
-                mWebSocketClient.send("Hello from " + Build.MANUFACTURER + " " + Build.MODEL);
+                //mWebSocketClient.send("Hello from " + Build.MANUFACTURER + " " + Build.MODEL);
             }
 
             @Override
@@ -128,8 +156,45 @@ public class FullscreenActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        //TextView textView = (TextView)findViewById(R.id.messages);
-                        //textView.setText(textView.getText() + "\n" + message);
+                        Log.d("Got from websocket", message);
+                        ifJsonNumber = ifJsonCab= 0;
+                        try {
+                            JSONObject jsonMessage = new JSONObject(message);
+                            try {
+                                clientNumber = jsonMessage.getString("clientNumber");
+                                ifJsonNumber = 1;
+                            } catch (JSONException e) {
+
+                            }
+                            try {
+                                cab = jsonMessage.getJSONObject("cab");
+                                ifJsonCab = 1;
+                            } catch (JSONException e) {
+                            }
+                            if (ifJsonNumber == 1) {
+                                JSONArray areas = jsonMessage.getJSONArray("areas");
+                                JSONObject myArea = areas.getJSONObject(Integer.parseInt(clientNumber) - 1);
+                                System.out.println("Area received");
+                            }else{
+                                if (ifJsonCab == 1){
+                                    String xCab = cab.getString("x");
+                                    String yCab = cab.getString("y");
+                                    String goToCab = cab.getString("goTo");
+                                    String statusCab = cab.getString("status");
+                                    String distanceCab = cab.getString("distanceToEnd");
+                                    System.out.println(xCab + " " + yCab + " " + goToCab + " " + statusCab + " " + distanceCab);
+                                }
+                            }
+                        /*try {
+                        }
+                        catch (JSONException e){
+                        }
+                        catch (Exception e){
+
+                        }*/
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
                 });
             }
@@ -179,11 +244,11 @@ public class FullscreenActivity extends AppCompatActivity {
         mVisible = false;
 
         // Schedule a runnable to remove the status and navigation bar after a delay
-        mHideHandler.removeCallbacks(mShowPart2Runnable);
-        mHideHandler.postDelayed(mHidePart2Runnable, UI_ANIMATION_DELAY);
+        /*mHideHandler.removeCallbacks(mShowPart2Runnable);
+        mHideHandler.postDelayed(mHidePart2Runnable, UI_ANIMATION_DELAY);*/
     }
 
-    private final Runnable mHidePart2Runnable = new Runnable() {
+    /*private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
         @Override
         public void run() {
@@ -199,7 +264,7 @@ public class FullscreenActivity extends AppCompatActivity {
                     | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
         }
-    };
+    };*/
 
     @SuppressLint("InlinedApi")
     private void show() {
@@ -209,7 +274,7 @@ public class FullscreenActivity extends AppCompatActivity {
         mVisible = true;
 
         // Schedule a runnable to display UI elements after a delay
-        mHideHandler.removeCallbacks(mHidePart2Runnable);
+        //mHideHandler.removeCallbacks(mHidePart2Runnable);
         mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
     }
 

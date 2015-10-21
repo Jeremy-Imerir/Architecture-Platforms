@@ -32,10 +32,12 @@ class Transformer():
 				vertexList[0].append(str(areamapvertices[j]["name"]))
 				vertexList[1].append(str(x)+";"+str(y))
 			for l in range(len(areamapbridges)) :
+				#Get vertexes from the bridges
 				areamapbridgesfrom = areamapbridges[l]["from"]
 				areamapbridgesto = areamapbridges[l]["to"]
 				streetList.append(str(areamapbridgesfrom[0])+";"+str(areamapbridgesto["vertex"]))
 			for k in range(len(areamapstreets)) :
+				#Get vertexes from the streets
 				areamapstreetspath = areamapstreets[k]["path"]
 				streetList.append(str(areamapstreetspath[0])+";"+str(areamapstreetspath[1]))
 
@@ -43,6 +45,7 @@ class Transformer():
 		alreadyPut = []
 		streetList = sorted(streetList, key=str.lower)
 
+		#Creating the graph
 		for k in range(len(streetList)) :
 			streetPoints = streetList[k].split(";")
 			for m in range(len(vertexList[0])) :
@@ -53,13 +56,17 @@ class Transformer():
 					ydistance = (int(npoint[1]) - int(mpoint[1])) ** 2
 					distance = int(math.sqrt(xdistance + ydistance))
 					if vertexList[0][m] == streetPoints[1] and vertexList[0][n] == streetPoints[0]:
+						#Try if i can add to the graph
 						try:
 							Graph[vertexList[0][m]].update( {vertexList[0][n] : distance} )
+						#Or i create the entry
 						except:
 							Graph[vertexList[0][m]] = {vertexList[0][n] : distance}
 					if vertexList[0][m] == streetPoints[0] and vertexList[0][n] == streetPoints[1]:
+						#Try if i can add to the graph
 						try:
 							Graph[vertexList[0][m]].update( {vertexList[0][n] : distance} )
+						#Or i create the entry
 						except:
 							Graph[vertexList[0][m]] = {vertexList[0][n] : distance}
 		self.VertexList = vertexList
