@@ -40,9 +40,12 @@ String cabS = 0;
 String positionS = 0;
 int xI = 0;
 int yI = 0;
+float xF = 0;
+float yF = 0;
 String goToS = 0;
 String statusS = 0;
 int distanceToEndI = 0;
+float distanceToEndF = 0;
 
 String cabRequestS = 0;
 String areaS = 0;

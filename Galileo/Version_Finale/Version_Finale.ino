@@ -188,8 +188,10 @@ void parseJson(char *jsonString)
             aJsonObject* distanceToEnd = aJson.getObjectItem(cab, "distanceToEnd");
             aJsonObject* x = aJson.getObjectItem(cab, "x");
             aJsonObject* y = aJson.getObjectItem(cab, "y");
-            if(x != NULL) { xI = x -> valueint ; }
-            if(y != NULL) { yI = y -> valueint ; }
+            /*if(x != NULL) { xI = x -> valueint ; }
+            if(y != NULL) { yI = y -> valueint ; }*/
+            if(x != NULL) { xF = x -> valuefloat ; }
+            if(y != NULL) { yF = y -> valuefloat ; }
             /*if (position != NULL)
             {
                 positionS = position -> valuestring;
@@ -200,7 +202,8 @@ void parseJson(char *jsonString)
             }*/
             if(goTo != NULL) { goToS = goTo -> valuestring ; }
             if(status != NULL) { statusS = status -> valuestring ; }
-            if(distanceToEnd != NULL) { distanceToEndI = distanceToEnd -> valueint ; }
+            //if(distanceToEnd != NULL) { distanceToEndI = distanceToEnd -> valueint ; }
+            if(distanceToEnd != NULL) { distanceToEndF = distanceToEnd -> valuefloat ; }
         }
         // trame : {"cabRequest": {{"area": "areaname","from": "a","to": "b"}}}
         aJsonObject* cabRequest = aJson.getObjectItem(root, "cabRequest");
@@ -230,15 +233,15 @@ void etatTaxi()
      lcd.setCursor(0,1); 
      lcd.print("x");
      lcd.setCursor(1,1);
-     lcd.print(xI);
+     lcd.print(xF);
      lcd.setCursor(4,1);
      lcd.print("y");
      lcd.setCursor(5,1);
-     lcd.print(yI);
+     lcd.print(yF);
      lcd.setCursor(8,1);
      lcd.print("DTE");
      lcd.setCursor(12,1);
-     lcd.print(distanceToEndI);
+     lcd.print(distanceToEndF);
    }
    else // Ou nous avons un client et affiche ces informations // or we have a client and display this informations
    {
