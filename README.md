@@ -1,7 +1,7 @@
 # Architecture-Platforms
 Projet intégration 3A
 
-Context
+Context :
 
 Each monitor displays a graphical representation of an urban road system. Each monitor is responsible for the display of a specific region. Which region and its road system description are obtained from a WebService in JSON. The regions are connected through bridges which let vehicles travel from one region to another.
 
