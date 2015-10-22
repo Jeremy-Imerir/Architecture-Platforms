@@ -188,8 +188,10 @@ void parseJson(char *jsonString)
             aJsonObject* distanceToEnd = aJson.getObjectItem(cab, "distanceToEnd");
             aJsonObject* x = aJson.getObjectItem(cab, "x");
             aJsonObject* y = aJson.getObjectItem(cab, "y");
-            if(x != NULL) { xI = x -> valueint ; }
-            if(y != NULL) { yI = y -> valueint ; }
+            /*if(x != NULL) { xI = x -> valueint ; }
+            if(y != NULL) { yI = y -> valueint ; }*/
+            if(x != NULL) { xF = x -> valuefloat ; }
+            if(y != NULL) { yF = y -> valuefloat ; }
             /*if (position != NULL)
             {
                 positionS = position -> valuestring;
